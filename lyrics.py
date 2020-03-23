@@ -37,10 +37,11 @@ def request_genius_song_info(song_title, artist_name):
 	response = requests.get(search_url, data=data, headers=headers)
 	return response
 
-def scrape_genius_song_url(url):
-	page = requests.get(url)
-	html = bs4.BeautifulSoup(page.text, 'html.parser')
+def extract_genius_lyrics_angular(html):
+	lyrics = html.find('div', class_='lyrics').get_text()
+	return lyrics
 
+def extract_genius_lyrics_react(html):
 	lyric_elements = html.select('div[class*="Lyrics__Container"]')[0]
 	lyrics = ""
 
@@ -53,6 +54,15 @@ def scrape_genius_song_url(url):
 			lyrics += elem.decode_contents().replace("<br/>", "\n")
 
 	return lyrics
+
+def scrape_genius_song_url(url):
+	page = requests.get(url)
+	html = bs4.BeautifulSoup(page.text, 'html.parser')
+
+	if html.find('div', class_='lyrics') is not None:
+		return extract_genius_lyrics_angular(html)
+	else:
+		return extract_genius_lyrics_react(html)
 
 def get_lyrics_from_genius(song_title, artist_name):
 	song_info = request_genius_song_info(song_title, artist_name).json()
@@ -79,3 +89,4 @@ def print_spotify_now_playing_lyrics():
 	print()
 
 print_spotify_now_playing_lyrics()
+
