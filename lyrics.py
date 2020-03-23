@@ -2,7 +2,7 @@ from subprocess import Popen, PIPE
 import json
 
 import requests
-from bs4 import BeautifulSoup
+import bs4
 
 config = {
 	'genius_token': "",
@@ -39,9 +39,19 @@ def request_genius_song_info(song_title, artist_name):
 
 def scrape_genius_song_url(url):
 	page = requests.get(url)
-	html = BeautifulSoup(page.text, 'html.parser')
-	[h.extract() for h in html('script')]
-	lyrics = html.find('div', class_='lyrics').get_text()
+	html = bs4.BeautifulSoup(page.text, 'html.parser')
+
+	lyric_elements = html.select('div[class*="Lyrics__Container"]')[0]
+	lyrics = ""
+
+	for elem in lyric_elements:
+		if isinstance(elem, bs4.NavigableString):
+			lyrics += elem
+		elif elem.name == "br":
+			lyrics += "\n"
+		else:
+			lyrics += elem.decode_contents().replace("<br/>", "\n")
+
 	return lyrics
 
 def get_lyrics_from_genius(song_title, artist_name):
